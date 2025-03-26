@@ -21,18 +21,20 @@ def start_server(ip,port):
         threading.Thread(target=handle_peer, args=(conn, addr)).start()
 
 def handle_peer(conn, addr):
-    '''Function to handle incoming messages from peers'''
+    """Handle messages from a connected peer."""
     try:
         while True:
             message = conn.recv(2048).decode()
             if message:
-                print(f"<{addr[0]}> {message}")
+                # clear current line to display messages on seprate lines
+                print("\r\033[K", end="")
+                print(f"\r{message}\n(You): ", end="")
                 broadcast(f"<{addr[0]}> {message}", conn)
             else:
                 remove_peer(conn)
                 break
     except:
-            remove_peer(conn)
+        remove_peer(conn)
 
 def broadcast(message, sender_conn):
     ''''Function that sends a message to all peers except the sender'''
