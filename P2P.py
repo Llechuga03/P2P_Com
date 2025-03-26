@@ -68,7 +68,7 @@ def user_input_handler():
     ''''Function to handle user input and commands'''
     while True:
         message = input("(You): ").strip()
-        if message.lower == "/exit":
+        if message.lower() == "/exit":
             print("Exiting...")
             sys.exit(0)
         elif message.startswith("/connect"):
