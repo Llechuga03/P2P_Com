@@ -17,7 +17,7 @@ def start_server(ip,port):
     while True:
         conn, addr = server.accept()
         print(f"Connnected to {addr}")
-        peers[addr] = conn
+        peers[conn] = addr #using socket as the key
         threading.Thread(target=handle_peer, args=(conn, addr)).start()
 
 def handle_peer(conn, addr):
@@ -29,10 +29,10 @@ def handle_peer(conn, addr):
                 print(f"<{addr[0]}> {message}")
                 broadcast(f"<{addr[0]}> {message}", conn)
             else:
-                remove_peer(conn, addr)
+                remove_peer(conn)
                 break
     except:
-            remove_peer(conn, addr)
+            remove_peer(conn)
 
 def broadcast(message, sender_conn):
     ''''Function that sends a message to all peers except the sender'''
