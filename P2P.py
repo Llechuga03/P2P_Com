@@ -1,11 +1,24 @@
 import socket
 import threading
+import sqlite3
 import sys
+from P2P_db import save_message, get_messages, intialize_db
+
+# Initialize the database so that messages can be saved as soon as connection is established
+intialize_db()
 
 # Store active peer connections
 peers = {} #use a dictionary to store peer connections and their address, instead of a list
 
 # Basic P2P system that handles secure message delivery using TCP and basic encode/decode functions.
+
+#THINGS TO DO:
+# 1. Add encryption to the messages
+# 2. Add a GUI to the chat system
+# 3. Allow users to block other users
+# 4. Add a feature to mute other users for a certain time
+# 6. Create a messaging API system using REDIS
+
 
 def start_server(ip,port):
     '''Start the server to accept incoming connections'''
@@ -26,6 +39,11 @@ def handle_peer(conn, addr):
         while True:
             message = conn.recv(2048).decode()
             if message:
+                sender_ip = addr[0]
+                receiver_ip = socket.gethostbyname(socket.gethostname())
+                # Save the message to the database
+                save_message(sender_ip, receiver_ip, message, "received")
+
                 # clear current line to display messages on seprate lines
                 print("\r\033[K", end="")
                 print(f"\r{message}\n(You): ", end="")
@@ -38,12 +56,20 @@ def handle_peer(conn, addr):
 
 def broadcast(message, sender_conn):
     ''''Function that sends a message to all peers except the sender'''
-    for peer in list(peers.keys()):
-        if peer != sender_conn:
+    sender_ip = socket.gethostbyname(socket.gethostname())
+
+    for peer_conn, (peer_ip, peer_port) in list(peers.items()):
+        if peer_conn != sender_conn:
             try:
-                peer.send(message.encode())
+                peer_conn.send(message.encode())
+
+                #Save the message to the database, indicating it was delivered
+                save_message(sender_ip, peer_ip, message, "sent", "delivered")
             except:
-                remove_peer(peer)
+                #Save the message to the database, indicating it was not delivered
+                print(f"Failed to send message to {peer_ip}:{peer_port}")
+                save_message(sender_ip, peer_ip, message, "sent", "failed")
+                remove_peer(peer_conn)
 
 def remove_peer(conn):
     ''''Function to remove a peer from the list of active connections'''
@@ -87,6 +113,12 @@ def user_input_handler():
             print("/peers - List active peers")
             print("/exit - Exit the chat")
             print("/help - Show this list of commands")
+        elif message.startswith("/history"):
+            messages = get_messages()
+            print("\n Message History:")
+            for msg in messages:
+                print(f"{msg[1]} -> {msg[2]} -> {msg[3]}: {msg[4]} ({msg[5]})")
+            print(" End of history\n")
         else:
             broadcast(f"{socket.gethostbyname(socket.gethostname())}: {message}", None)
 
@@ -98,6 +130,7 @@ if __name__ == "__main__":
     print("To exit, type: /exit")
     print("To print this message again, type: /help")
     print("To send a message, just type it and hit enter.")
+    print("To view message history, type: /history")
     while True:
         if len(sys.argv) != 3:
             print("ERROR, invalid syntax. Please use the following syntax: python3 P2P.py <IP> <PORT>")
