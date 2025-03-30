@@ -1,8 +1,7 @@
 import socket
 import threading
-import sqlite3
 import sys
-from P2P_db import save_message, get_messages, intialize_db
+from database.P2P_db import save_message, get_messages, intialize_db
 
 # Initialize the database so that messages can be saved as soon as connection is established
 intialize_db()
@@ -17,7 +16,7 @@ peers = {} #use a dictionary to store peer connections and their address, instea
 # 2. Add a GUI to the chat system
 # 3. Allow users to block other users
 # 4. Add a feature to mute other users for a certain time
-# 6. Create a messaging API system using REDIS
+# 5. Create a messaging API system using REDIS
 
 
 def start_server(ip,port):
@@ -145,4 +144,5 @@ if __name__ == "__main__":
     
     threading.Thread(target=start_server, args=(ip, port), daemon=True).start()
     user_input_handler()
+
 #Note: the code is not complete, but it should be enough to get you started.
